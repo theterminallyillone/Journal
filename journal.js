@@ -19,7 +19,11 @@ if(date.getDate() < 10) {
 	datestring += "0"
 }
 datestring += date.getDate();
-var timestamp = "~"+date.getHours()+":";
+var timestamp = "~";
+if (date.getHours() < 10) {
+	timestamp += "0";
+}
+timestamp+=date.getHours()+":";
 if (date.getMinutes() < 10) {
 	timestamp += "0";
 }
@@ -102,7 +106,7 @@ function init() {
 		function logday(day) {
 			var h = "\x1b[47m\x1b[30m";
 			var r = "\x1b[0m";
-			console.log(h+"\x1b[4m"+day+r+"\n"+h+week[journal.entries[journal.entries.indexOf(day)+1].day]+r);
+			console.log(h+"\x1b[4m"+day+r+"\n"+h+"\x1b[4m"+week[journal.entries[journal.entries.indexOf(day)+1].day]+r);
 			console.log(h+rlt[0]+r+"\n");
 			for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].records.length; i++) {
 				console.log(processentry(journal.entries[journal.entries.indexOf(day)+1].records[i])+"\n");
