@@ -28,7 +28,7 @@ if (date.getSeconds() < 10) {
 	timestamp += "0";
 }
 timestamp += date.getSeconds();
-fs.readFile('journal.json', function(err, data) {
+fs.readFile('journal.json',function(err, data) {
 	if (!err) {
 		var journal = JSON.parse(data);
 		if (journal.entries.indexOf(datestring) == -1) {
@@ -41,19 +41,19 @@ fs.readFile('journal.json', function(err, data) {
 				tasks : []
 			};
 			journal.entries.push(entry);
-			fs.writeFile("journal.json", JSON.stringify(journal));
+			fs.writeFile("journal.json", JSON.stringify(journal),function(){});
 			console.log("Good morning!");
 		} else {
 			init();
 		}
 	} else {
 		var entry = {entries:[],redacted:[],hilited:["default","yellow"]};
-		fs.writeFile("journal.json", JSON.stringify(entry));
+		fs.writeFile("journal.json", JSON.stringify(entry),function(){} );
 		console.log("Here's that journal.json you requested.")
 	}
 });
 function init() {
-	fs.readFile('journal.json', function(err, data) {
+	fs.readFile('journal.json',function(err, data) {
 		var journal = JSON.parse(data);
 		var arguments = process.argv.slice(2);
 		function hilite(str, color) {
@@ -202,7 +202,7 @@ function init() {
 							}
 							journal.entries[journal.entries.indexOf(recorddate)+1].records.push(record);
 							touch(recorddate);
-							fs.writeFile("journal.json", JSON.stringify(journal));
+							fs.writeFile("journal.json", JSON.stringify(journal),function(){});
 							console.log("Entry recorded.");
 							rl.pause();
 						});
@@ -253,6 +253,6 @@ function init() {
 		} else {
 			logday(datestring);
 		}
-		fs.writeFile("journal.json", JSON.stringify(journal));
+		fs.writeFile("journal.json", JSON.stringify(journal),function(){});
 	});
 }
