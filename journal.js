@@ -196,6 +196,27 @@ function init() {
 		}
 		if (arguments[0] != undefined) {
 			switch (arguments[0]) {
+				case "help":
+					console.log("OPTIONS:")
+					console.log("hilite (color) (#tag || default)");
+					console.log("  hilite tags, several colors are available");
+					console.log("erase (date)");
+					console.log("  select from a list an entry to erase");
+					console.log("read (tasks || records || logs || #tag || date) (#tag || date) (date || #tag) (#tag)");
+					console.log("  verbose command used to search through entries")
+					console.log("edit (date)");
+					console.log("  select from a list an entry to edit");
+					console.log("task (date || task) (task)");
+					console.log("  record a task");
+					console.log("record (date)");
+					console.log("  record a multiline log");
+					console.log("log (date || log) (log)");
+					console.log("  record a log");
+					console.log("redact (#tag)");
+					console.log("  hide a tag");
+					console.log("unredact (#tag)");
+					console.log("  unhide a tag");
+					break;
 				case "erase":
 					var searchdate = "";
 					var selections;
@@ -390,6 +411,24 @@ function init() {
 								journal.entries.push({logs:[],tasks:[arguments[2]],records:[],day:new Date(arguments[1]).getDay(),touched:datestring+timestamp})
 								console.log("Task recorded.");
 							}
+						} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[1]) == true && arguments[2] == undefined) {
+							if (journal.entries.indexOf(arguments[1]) == -1) {
+								journal.entries.push(arguments[1]);
+								journal.entries.push({logs:[],tasks:[],records:[],day:new Date(arguments[1]).getDay(),touched:datestring+timestamp});
+							}
+							console.log("Which task?");
+							rl.resume();
+							rl.on('line', (input) => {
+								if (input.length > 0) {
+									journal.entries[journal.entries.indexOf(arguments[1])+1].tasks.push(input);
+									touch(arguments[1]);
+									fs.writeFile("journal.json", JSON.stringify(journal),function(){});
+									console.log("Task recorded.");
+								} else {
+									console.log("Aborted.");
+								}
+								rl.pause();
+							});
 						} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[1]) == false && arguments[1].length > 0) {
 							journal.entries[journal.entries.indexOf(datestring)+1].tasks.push(arguments[1]);
 							touch(datestring);
@@ -398,7 +437,19 @@ function init() {
 							console.log("I think you made a mistake.");
 						}
 					} else {
-						console.log("When is this?");
+						console.log("Which task?");
+						rl.resume();
+						rl.on('line', (input) => {
+							if (input.length > 0) {
+								journal.entries[journal.entries.indexOf(datestring)+1].tasks.push(input);
+								touch(datestring);
+								fs.writeFile("journal.json", JSON.stringify(journal),function(){});
+								console.log("Task recorded.");
+							} else {
+								console.log("Aborted.");
+							}
+							rl.pause();
+						});
 					}
 					break;
 				case "record":
@@ -441,6 +492,24 @@ function init() {
 								journal.entries.push({logs:[arguments[2]+"\n"+timestamp],tasks:[],records:[],day:new Date(arguments[1]).getDay(),touched:datestring+timestamp})
 								console.log("Entry logged.");
 							}
+						} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[1]) == true && arguments[2] == undefined) {
+							if (journal.entries.indexOf(arguments[1]) == -1) {
+								journal.entries.push(arguments[1]);
+								journal.entries.push({logs:[],tasks:[],records:[],day:new Date(arguments[1]).getDay(),touched:datestring+timestamp});
+							}
+							console.log("What am I logging?");
+							rl.resume();
+							rl.on('line', (input) => {
+								if (input.length > 0) {
+									journal.entries[journal.entries.indexOf(arguments[1])+1].logs.push(input+"\n"+timestamp);
+									touch(arguments[1]);
+									fs.writeFile("journal.json", JSON.stringify(journal),function(){});
+									console.log("Entry logged.");
+								} else {
+									console.log("Aborted.");
+								}
+								rl.pause();
+							});
 						} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[1]) == false) {
 							journal.entries[journal.entries.indexOf(datestring)+1].logs.push(arguments[1]+" \n"+timestamp);
 							touch(datestring);
@@ -449,7 +518,19 @@ function init() {
 							console.log("How on earth did you garble that up?!");
 						}
 					} else {
-						console.log("Pardon me, but, log what?");
+						console.log("What am I logging?");
+						rl.resume();
+						rl.on('line', (input) => {
+							if (input.length > 0) {
+								journal.entries[journal.entries.indexOf(datestring)+1].logs.push(input+"\n"+timestamp);
+								touch(datestring);
+								fs.writeFile("journal.json", JSON.stringify(journal),function(){});
+								console.log("Entry logged.");
+							} else {
+								console.log("Aborted.");
+							}
+							rl.pause();
+						});
 					}
 					break;
 				case "read":
