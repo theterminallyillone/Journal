@@ -73,36 +73,6 @@ function init() {
 			str += "\x1b[0m";
 			return str;
 		}
-		function selectfrom(searchdate) {
-			var selections = [];
-			var selectionlength = 0;
-			var h = "\x1b[47m\x1b[30m";
-			var r = "\x1b[0m";
-			console.log(h+"\x1b[4m"+searchdate+r+"\n"+h+"\x1b[4m"+week[journal.entries[journal.entries.indexOf(searchdate)+1].day]+r);
-			console.log(h+rlt[0]+r+"\n");
-			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].records.length; i++) {
-				selections.push(selectionlength.toString());
-				selections.push("R"+i+journal.entries[journal.entries.indexOf(searchdate)+1].records[i].substr(journal.entries[journal.entries.indexOf(searchdate)+1].records[i].indexOf("~"), journal.entries[journal.entries.indexOf(searchdate)+1].records[i].length));
-				console.log(processentry(hilite("("+selectionlength+")", "default")+" "+journal.entries[journal.entries.indexOf(searchdate)+1].records[i]+"\n"));
-				selectionlength++;
-			}
-			console.log(h+rlt[1]+r+"\n");
-			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].logs.length; i++) {
-				selections.push(selectionlength.toString());
-				selections.push("L"+i+journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].substr(journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].indexOf("~"), journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].length));
-				console.log(processentry(hilite("("+selectionlength+")", "default")+" "+journal.entries[journal.entries.indexOf(searchdate)+1].logs[i]+"\n"));
-				selectionlength++;
-			}
-			console.log(h+rlt[2]+r+"\n");
-			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].tasks.length; i++) {
-				selections.push(selectionlength.toString());
-				selections.push("T"+i+"~");
-				console.log(processentry(hilite("("+selectionlength+")", "default")+" "+journal.entries[journal.entries.indexOf(searchdate)+1].tasks[i]+"\n"));
-				selectionlength++;
-			}
-			console.log("\x1b[33m~"+journal.entries[journal.entries.indexOf(searchdate)+1].touched.replace("~", "-")+r);
-			return selections;
-		}
 		function findtag(day, tag, RLT, nv) {
 			var results = [];
 			if (RLT.indexOf("R") > -1) {
@@ -168,10 +138,40 @@ function init() {
 				}
 			}
 			if (redacted == true) {
-				return "\x1b[47m\x1b[37m"+str+"\x1b[0m";
+				return "\x1b[47m\x1b[37m"+str.replace("\n", "\x1b[0m\n\x1b[47m\x1b[37m")+"\x1b[0m";
 			} else {
 				return rstr.replace(/\* /g, "\n");
 			}
+		}
+		function selectfrom(searchdate) {
+			var selections = [];
+			var selectionlength = 0;
+			var h = "\x1b[47m\x1b[30m";
+			var r = "\x1b[0m";
+			console.log(h+"\x1b[4m"+searchdate+r+"\n"+h+"\x1b[4m"+week[journal.entries[journal.entries.indexOf(searchdate)+1].day]+r);
+			console.log(h+rlt[0]+r+"\n");
+			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].records.length; i++) {
+				selections.push(selectionlength.toString());
+				selections.push("R"+i+journal.entries[journal.entries.indexOf(searchdate)+1].records[i].substr(journal.entries[journal.entries.indexOf(searchdate)+1].records[i].indexOf("~"), journal.entries[journal.entries.indexOf(searchdate)+1].records[i].length));
+				console.log(hilite("("+selectionlength+")", "default")+" "+processentry(journal.entries[journal.entries.indexOf(searchdate)+1].records[i]+"\n"));
+				selectionlength++;
+			}
+			console.log(h+rlt[1]+r+"\n");
+			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].logs.length; i++) {
+				selections.push(selectionlength.toString());
+				selections.push("L"+i+journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].substr(journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].indexOf("~"), journal.entries[journal.entries.indexOf(searchdate)+1].logs[i].length));
+				console.log(hilite("("+selectionlength+")", "default")+" "+processentry(journal.entries[journal.entries.indexOf(searchdate)+1].logs[i]+"\n"));
+				selectionlength++;
+			}
+			console.log(h+rlt[2]+r+"\n");
+			for (var i = 0; i < journal.entries[journal.entries.indexOf(searchdate)+1].tasks.length; i++) {
+				selections.push(selectionlength.toString());
+				selections.push("T"+i+"~");
+				console.log(hilite("("+selectionlength+")", "default")+" "+processentry(journal.entries[journal.entries.indexOf(searchdate)+1].tasks[i]+"\n"));
+				selectionlength++;
+			}
+			console.log("\x1b[33m~"+journal.entries[journal.entries.indexOf(searchdate)+1].touched.replace("~", "-")+r);
+			return selections;
 		}
 		function touch(day) {
 			journal.entries[journal.entries.indexOf(day)+1].touched = datestring+timestamp;
@@ -248,11 +248,11 @@ function init() {
 							if (/\d+/g.test(somenumber) == true && selections.indexOf(somenumber) > -1) {
 								fallingthrough = true;
 								if (selections[selections.indexOf(somenumber)+1].substr(0,1) == "L") {
-									console.log(journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]);
+									console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]));
 								} else if (selections[selections.indexOf(somenumber)+1].substr(0,1) == "R") {
-									console.log(journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]);
+									console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]));
 								} else if (selections[selections.indexOf(somenumber)+1].substr(0,1) == "T") {
-									console.log(journal.entries[journal.entries.indexOf(searchdate)+1].tasks[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]);
+									console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].tasks[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]));
 								}
 								console.log("Really? (Y/N)");
 								rl.on('line', (input) => {
@@ -306,7 +306,7 @@ function init() {
 								if (/\d+/g.test(somenumber) == true && selections.indexOf(somenumber) > -1) {
 									if (selections[selections.indexOf(somenumber)+1].substr(0,1) == "L") {
 										fallingthrough = true;
-										console.log(journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].substr(0, journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].indexOf("\n~")));
+										console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].substr(0, journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].indexOf("\n~"))));
 										rl.on('line', (input) => {
 											if (input.length > 0) {
 												journal.entries[journal.entries.indexOf(searchdate)+1].logs[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)] = input+"\n"+selections[selections.indexOf(somenumber)+1].substr(selections[selections.indexOf(somenumber)+1].indexOf("~"), selections[selections.indexOf(somenumber)+1].length);
@@ -320,7 +320,7 @@ function init() {
 										});
 									} else if (selections[selections.indexOf(somenumber)+1].substr(0,1) == "R") {
 										fallingthrough = true;
-										console.log(journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].substr(0, journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].indexOf("\n~")));
+										console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].substr(0, journal.entries[journal.entries.indexOf(searchdate)+1].records[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)].indexOf("\n~"))));
 										console.log("Press CTRL-C when you're finished.");
 										rl.on('line', (input) => {
 											lineinput += input+"\n";
@@ -338,7 +338,7 @@ function init() {
 										});
 									} else {
 										fallingthrough = true;
-										console.log(journal.entries[journal.entries.indexOf(searchdate)+1].tasks[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]);
+										console.log(processentry(journal.entries[journal.entries.indexOf(searchdate)+1].tasks[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)]));
 										rl.on('line', (input) => {
 											if (input.length > 0) {
 												journal.entries[journal.entries.indexOf(searchdate)+1].tasks[selections[selections.indexOf(somenumber)+1].substr(1,selections[selections.indexOf(somenumber)+1].indexOf("~")-1)] = input;
