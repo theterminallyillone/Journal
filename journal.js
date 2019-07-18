@@ -138,7 +138,7 @@ function init() {
 				}
 			}
 			if (redacted == true) {
-				return "\x1b[47m\x1b[37m"+str.replace("\n", "\x1b[0m\n\x1b[47m\x1b[37m")+"\x1b[0m";
+				return "\x1b[47m\x1b[37m"+str.replace(/[^\n]/g, "*").replace(/\n/g, "\x1b[0m\n\x1b[47m\x1b[37m")+"\x1b[0m";
 			} else {
 				return rstr.replace(/\* /g, "\n");
 			}
@@ -197,7 +197,7 @@ function init() {
 		if (arguments[0] != undefined) {
 			switch (arguments[0]) {
 				case "help":
-					console.log("OPTIONS:")
+					console.log("OPTIONS:");
 					console.log("hilite (color) (#tag || default)");
 					console.log("  hilite tags, several colors are available");
 					console.log("erase (date)");
@@ -216,6 +216,51 @@ function init() {
 					console.log("  hide a tag");
 					console.log("unredact (#tag)");
 					console.log("  unhide a tag");
+					console.log("webview (port)");
+					console.log("  initiates a webserver on specified port, default is 8080");
+					break;
+				case "webview":
+					var PORT;
+					if (arguments[1] != undefined && Number(arguments[1]) >= 1024 && Number(arguments[1]) <= 49151) {
+						PORT = arguments[1];
+					} else if (arguments[1] == undefined) {
+						PORT = 8080;
+					} else {
+						console.log("Where?");
+						break;
+					}
+					var os = require('os');
+					var networkInterfaces = os.networkInterfaces();
+					if (networkInterfaces.wlan0 != undefined) {
+						console.log("Here's that server: http://"+networkInterfaces.wlan0[0].address+":"+PORT);
+					} else if (networkInterfaces.eth0 != undefined) {
+						console.log("Here's that server: http://"+networkInterfaces.eth0[0].address+":"+PORT);
+					} else {
+						console.log("Here's that server: http://localhost:"+PORT);
+					}
+					var document = "<!DOCTYPE html><html><head><title>Journal</title></head>";
+					document += "<style>.green { background-color: green} .yellow { background-color: yellow} .magenta { background-color: magenta } .cyan {background-color: cyan} .blue { background-color: blue} .red { background-color: red }</style>";
+					document += "<body bgcolor='#000000'><div id='container'></div><script>";
+					document += "function hilite(str,color){ if (color == 'default') { color = journal.hilited[journal.hilited.indexOf('default')+1]; }return '<span style=\"position:relative\" class='+color+'>'+str+'</span>';}";
+					document += "function processentry(str) {var pstr = str.replace(/\\n/g, ' * ').split(' '); var rstr = '';var redacted = false;for (var i = 0; i < journal.redacted.length; i++) {if (pstr.indexOf(journal.redacted[i]) > -1) {redacted = true;}} if (!redacted) {for (var i = 0; i < pstr.length; i++) {if (journal.hilited.indexOf(pstr[i]) > -1) {pstr[i]=hilite(pstr[i], journal.hilited[journal.hilited.indexOf(pstr[i])+1]);} else if (/^#.*/g.test(pstr[i]) == true) {pstr[i]=hilite(pstr[i], 'default');} else if (/~\\d\\d:\\d\\d:\\d\\d/g.test(pstr[i]) == true) {pstr[i] = '<span style=\"color:red\">'+pstr[i]+'</span>';}rstr += pstr[i]+' ';}}if (redacted == true) {return '<span style=\"background-color:#000000\">'+str.replace(/[^\\n]/g, '*').replace(/\\n/g, '</span>\\n<span style=\"background-color:#000000\">')+'</span>';} else {return rstr.replace(/\\* /g, '\\n');}}";
+					document += "var journal = "+JSON.stringify(journal)+";";
+					document += "for (var i = 0; i < journal.entries.length; i+=2) { var added = ''; added += '<div style=\"background-color:#FFFFFF\" id='+\"c\"+journal.entries[i]+' onclick='+\"document.getElementById(\"+\'+journal.entries[i]+\'+\").style=\"+\'visibility:visible\'+'><h>'+journal.entries[i]+'</h></div><div style=\"background-color:#FFFFFF;visibility:hidden;\" id='+journal.entries[i]+'><center>'; added+='<div class=\"records\">'; for (var j = 0; j < journal.entries[i+1].records.length; j++) { added+=processentry(journal.entries[i+1].records[j]).replace(/\\n/g, '<br>');} added+='</div><div class=\"logs\">'; for (var j = 0; j < journal.entries[i+1].logs.length; j++) { added+=processentry(journal.entries[i+1].logs[j]).replace(/\\n/g, '<br>');} added+='</div><div class=\"tasks\">'; for (var j = 0; j < journal.entries[i+1].tasks.length; j++) { added+=processentry(journal.entries[i+1].tasks[j]).replace(/\\n/g, '<br>');} added+='</center></div>';";
+					document += "added += '</div><br>'; document.getElementById('container').innerHTML += added;}";
+					document += "</script></body></html>";
+					var http = require('http');
+					var server = http.createServer(function (req, res) {
+						res.writeHead(200, {'Content-Type': 'text/html'});
+						res.write(document);
+						res.end();
+					})
+					server.listen(PORT);
+					rl.resume();
+					rl.on('SIGINT', () => {
+						console.log("Closing...");
+						server.close();
+						process.exit(0);
+						rl.pause();
+					});
 					break;
 				case "erase":
 					var searchdate = "";
