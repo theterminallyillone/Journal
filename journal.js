@@ -1,5 +1,6 @@
 #!/usr/bin/env nodejs
 var fs = require("fs");
+var crypto = require('crypto');
 var colors = ["red","\x1b[41m","blue","\x1b[44m","magenta","\x1b[45m","yellow","\x1b[43m","cyan","\x1b[46m","green","\x1b[42m"];
 var week = ["Sunday    ", "Monday    ", "Tuesday   ", "Wednesday ", "Thursday  ", "Friday    ", "Saturday  "];
 var rlt = ["Records   ", "Logs      ", "Tasks     "];
@@ -52,7 +53,7 @@ fs.readFile('journal.json',function(err, data) {
 		}
 	} else {
 		var entry = {entries:[],redacted:[],hilited:["default","yellow"]};
-		fs.writeFile("journal.json", JSON.stringify(entry),function(){} );
+		fs.writeFile("journal.json", JSON.stringify(entry),function(){});
 		console.log("Here's that journal.json you requested.")
 	}
 });
@@ -194,6 +195,18 @@ function init() {
 			}
 			console.log("\x1b[33m~"+journal.entries[journal.entries.indexOf(day)+1].touched.replace("~", "-")+r);
 		}
+		function encrypt(str, password) {
+			var cipher = crypto.createCipher('aes-256-ctr',password);
+			var crypted = cipher.update(str,'utf8','hex');
+  			crypted += cipher.final('hex');
+			return crypted;
+		}
+		function decrypt(str, password) {
+			var decipher = crypto.createDecipher('aes-256-ctr',password);
+			var dec = decipher.update(str,'hex','utf8');
+			dec += decipher.final('utf8');
+			return dec;
+		}
 		if (arguments[0] != undefined) {
 			switch (arguments[0]) {
 				case "help":
@@ -218,6 +231,141 @@ function init() {
 					console.log("  unhide a tag");
 					console.log("webview (port)");
 					console.log("  initiates a webserver on specified port, default is 8080");
+					console.log("print (file) (tasks || logs || records || date) (date) (date)");
+					console.log("  builds a human readable text for a date range");
+					console.log("export (file)");
+					console.log("  spawns json");
+					console.log("import (file)");
+					console.log("  copies json");
+					console.log("burn");
+					console.log("  destroys unexported json");
+					break;
+				case "burn":
+					console.log("Are you sure? (Y/N)");
+					rl.resume();
+					rl.on('line', (input) => {
+						if (input.toUpperCase() == "Y") {
+							fs.unlink("journal.json", (err) => {
+								console.log("Your journal.json bursts into flames.");
+							});
+						} else {
+							console.log("Aborted");
+						}
+						rl.pause();
+					});
+					break;
+				case "print":
+					var book = "";
+					if (arguments[1] == undefined) {
+						console.log("Where?");
+					} else if (arguments[2] == undefined) {
+						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
+						book += datestring+"\n"+week[journal.entries[journal.entries.indexOf(datestring)+1].day].replace(" ", "")+"\nRecords\n";
+						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].records.length; i++) {
+							book += journal.entries[journal.entries.indexOf(datestring)+1].records[i]+"\n";
+						}
+						book += "Logs\n";
+						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].logs.length; i++) {
+							book += journal.entries[journal.entries.indexOf(datestring)+1].logs[i]+"\n";
+						}
+						book += "Tasks\n";
+						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].tasks.length; i++) {
+							book += journal.entries[journal.entries.indexOf(datestring)+1].tasks[i]+"\n";
+						}
+						book += "~"+journal.entries[journal.entries.indexOf(datestring)+1].touched.replace("~", "-");
+						fs.writeFile(arguments[1], book,function(){});
+					} else if (arguments[3] == undefined) {
+					
+					} else if (arguments[4] == undefined) {
+					
+					} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[5]) == true) {
+					
+					} else {
+						console.log("The printer is jammed.");
+					}
+					break;
+				case "export":
+					var path;
+					if (arguments[1] != undefined) {
+						path = arguments[1]
+						console.log("Your password, please?");
+						rl.stdoutMuted = true;
+						rl.query = "(-.^) ";
+						rl.question(rl.query, function(password1) {
+							console.log("\nAnd, once more?");
+							rl.question(rl.query, function(password2) {
+								if (password1 == password2) {
+									fs.writeFile(path, encrypt(JSON.stringify(journal), password2), function(){});
+									console.log("\nIt is done."+password2);
+								} else {
+									console.log("\nAmnesia?");
+								}
+								rl.close();
+							});
+						});
+						rl._writeToOutput = function _writeToOutput(stringToWrite) {
+							if (rl.stdoutMuted) {
+								rl.output.write("\x1B[2K\x1B[200D"+"("+((rl.line.length%2==1)?"^.-":"-.^")+") ");
+							} else {
+								rl.output.write(stringToWrite);
+							}
+						};
+					} else {
+						console.log("Where?");
+					}
+					break;
+				case "import":
+					if (arguments[1] != undefined) {
+						var path = arguments[1];
+						console.log("Your password, please?");
+						rl.stdoutMuted = true;
+						rl.query = "(-.^) ";
+						rl.question(rl.query, function(password) {
+							fs.readFile(path,'utf8',function(err, data) {
+								var book = JSON.parse(decrypt(data,password));
+								for (var i = 0; i < book.entries.length; i+=2) {
+									if (journal.entries.indexOf(book.entries[i]) == -1) {
+										journal.entries.push(book.entries[i]);
+										journal.entries.push(book.entries[i+1]);
+										touch(book.entries[i]);
+									} else {
+										for (var j = 0; j < book.entries[i+1].records.length;j++) {
+											if (journal.entries[journal.entries.indexOf(book.entries[i])+1].records.indexOf(book.entries[i+1].records[j]) == -1) {
+												journal.entries[journal.entries.indexOf(book.entries[i])+1].records.push(book.entries[i+1].records[j]);
+												touch(book.entries[i]);
+											}
+										}
+										for (var j = 0; j < book.entries[i+1].logs.length;j++) {
+											if (journal.entries[journal.entries.indexOf(book.entries[i])+1].logs.indexOf(book.entries[i+1].logs[j]) == -1) {
+												journal.entries[journal.entries.indexOf(book.entries[i])+1].logs.push(book.entries[i+1].logs[j]);
+												touch(book.entries[i]);
+											}
+										}
+										for (var j = 0; j < book.entries[i+1].tasks.length;j++) {
+											if (journal.entries[journal.entries.indexOf(book.entries[i])+1].tasks.indexOf(book.entries[i+1].tasks[j]) == -1) {
+												journal.entries[journal.entries.indexOf(book.entries[i])+1].tasks.push(book.entries[i+1].tasks[j]);
+												touch(book.entries[i]);
+											}
+										}
+									}
+								}
+								journal.redacted = book.redacted;
+								journal.hilited = book.hilited;
+								fs.writeFile("journal.json", JSON.stringify(journal),function(){});
+								console.log("\nIt is done.");
+							});
+							rl.close();
+						});
+						rl._writeToOutput = function _writeToOutput(stringToWrite) {
+							if (rl.stdoutMuted) {
+								rl.output.write("\x1B[2K\x1B[200D"+"("+((rl.line.length%2==1)?"^.-":"-.^")+") ");
+							} else {
+								rl.output.write(stringToWrite);
+							}
+						};
+					} else {
+						console.log("Where?");
+					}
 					break;
 				case "webview":
 					var PORT;
