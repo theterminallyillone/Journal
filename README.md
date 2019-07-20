@@ -23,11 +23,11 @@ unredact (#tag)
   unhide a tag
 webview (port)
   initiates a webserver on specified port, default is 8080
-print (file) (tasks || logs || records || date) (date) (date)
+print (file.txt) (tasks || logs || records || date) (date) (date)
   builds a human readable text for a date range
-export (file)
+export (file.dat)
   spawns json
-import (file)
+import (file.dat)
   copies json
 burn
   destroys unexported json

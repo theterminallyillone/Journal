@@ -207,6 +207,60 @@ function init() {
 			dec += decipher.final('utf8');
 			return dec;
 		}
+		function print(RLT, day) {
+			var book = "";
+			book += day+"\n"+week[journal.entries[journal.entries.indexOf(day)+1].day].replace(" ", "")+"\n";
+			if (RLT.indexOf("R") > -1) {
+				book+="Records\n";
+				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].records.length; i++) {
+					var redacted = false;
+					for (var j = 0; j < journal.redacted.length; j++) {
+						if (journal.entries[journal.entries.indexOf(day)+1].records[i].indexOf(journal.redacted[j]) > -1) {
+							redacted = true;
+						}
+					}
+					if (!redacted) {
+						book += journal.entries[journal.entries.indexOf(day)+1].records[i]+"\n";
+					} else {
+						book += journal.entries[journal.entries.indexOf(day)+1].records[i].replace(/[^\n]/g, "*")+"\n";
+					}
+				}
+			}
+			if (RLT.indexOf("L") > -1) {
+				book += "Logs\n";
+				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].logs.length; i++) {
+					var redacted = false;
+					for (var j = 0; j < journal.redacted.length; j++) {
+						if (journal.entries[journal.entries.indexOf(day)+1].logs[i].indexOf(journal.redacted[j]) > -1) {
+							redacted = true;
+						}
+					}
+					if (!redacted) {
+						book += journal.entries[journal.entries.indexOf(day)+1].logs[i]+"\n";
+					} else {
+						book += journal.entries[journal.entries.indexOf(day)+1].logs[i].replace(/[^\n]/g, "*")+"\n";
+					}
+				}
+			}
+			if (RLT.indexOf("T") > -1) {
+				book += "Tasks\n";
+				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].tasks.length; i++) {
+					var redacted = false;
+					for (var j = 0; j < journal.redacted.length; j++) {
+						if (journal.entries[journal.entries.indexOf(day)+1].tasks[i].indexOf(journal.redacted[j]) > -1) {
+							redacted = true;
+						}
+					}
+					if (!redacted) {
+						book += journal.entries[journal.entries.indexOf(day)+1].tasks[i]+"\n";
+					} else {
+						book += journal.entries[journal.entries.indexOf(day)+1].tasks[i].replace(/[^\n]/g, "*")+"\n";
+					}
+				}
+			}
+			book += "~"+journal.entries[journal.entries.indexOf(day)+1].touched.replace("~", "-");
+			return book;
+		}
 		if (arguments[0] != undefined) {
 			switch (arguments[0]) {
 				case "help":
@@ -231,11 +285,11 @@ function init() {
 					console.log("  unhide a tag");
 					console.log("webview (port)");
 					console.log("  initiates a webserver on specified port, default is 8080");
-					console.log("print (file) (tasks || logs || records || date) (date) (date)");
+					console.log("print (file.txt) (tasks || logs || records || date) (date) (date)");
 					console.log("  builds a human readable text for a date range");
-					console.log("export (file)");
+					console.log("export (file.dat)");
 					console.log("  spawns json");
-					console.log("import (file)");
+					console.log("import (file.dat)");
 					console.log("  copies json");
 					console.log("burn");
 					console.log("  destroys unexported json");
@@ -256,23 +310,11 @@ function init() {
 					break;
 				case "print":
 					var book = "";
-					if (arguments[1] == undefined) {
+					if (arguments[1] == undefined || /^.*\.txt/g.test(arguments[1]) == false) {
 						console.log("Where?");
 					} else if (arguments[2] == undefined) {
 						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
-						book += datestring+"\n"+week[journal.entries[journal.entries.indexOf(datestring)+1].day].replace(" ", "")+"\nRecords\n";
-						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].records.length; i++) {
-							book += journal.entries[journal.entries.indexOf(datestring)+1].records[i]+"\n";
-						}
-						book += "Logs\n";
-						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].logs.length; i++) {
-							book += journal.entries[journal.entries.indexOf(datestring)+1].logs[i]+"\n";
-						}
-						book += "Tasks\n";
-						for (var i = 0; i < journal.entries[journal.entries.indexOf(datestring)+1].tasks.length; i++) {
-							book += journal.entries[journal.entries.indexOf(datestring)+1].tasks[i]+"\n";
-						}
-						book += "~"+journal.entries[journal.entries.indexOf(datestring)+1].touched.replace("~", "-");
+						book += print("RLT", datestring);
 						fs.writeFile(arguments[1], book,function(){});
 					} else if (arguments[3] == undefined) {
 					
@@ -286,7 +328,7 @@ function init() {
 					break;
 				case "export":
 					var path;
-					if (arguments[1] != undefined) {
+					if (arguments[1] != undefined && /^.*\.dat/g.test(arguments[1]) == true) {
 						path = arguments[1]
 						console.log("Your password, please?");
 						rl.stdoutMuted = true;
@@ -296,7 +338,7 @@ function init() {
 							rl.question(rl.query, function(password2) {
 								if (password1 == password2) {
 									fs.writeFile(path, encrypt(JSON.stringify(journal), password2), function(){});
-									console.log("\nIt is done."+password2);
+									console.log("\nIt is done.");
 								} else {
 									console.log("\nAmnesia?");
 								}
@@ -315,7 +357,7 @@ function init() {
 					}
 					break;
 				case "import":
-					if (arguments[1] != undefined) {
+					if (arguments[1] != undefined && fs.existsSync(arguments[1]) && /^.*\.dat/g.test(arguments[1]) == true) {
 						var path = arguments[1];
 						console.log("Your password, please?");
 						rl.stdoutMuted = true;
