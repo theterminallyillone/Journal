@@ -316,12 +316,129 @@ function init() {
 						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
 						book += print("RLT", datestring);
 						fs.writeFile(arguments[1], book,function(){});
-					} else if (arguments[3] == undefined) {
-					
-					} else if (arguments[4] == undefined) {
-					
-					} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[5]) == true) {
-					
+					} else if (arguments[3] == undefined) { 
+						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
+						if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[2]) == true && journal.entries.indexOf(arguments[2]) > -1) {
+							book += print("RLT", arguments[2]);
+						} else if (arguments[2] == "tasks") {
+							book += print("T", datestring);
+						} else if (arguments[2] == "records") {
+							book += print("R", datestring);
+						} else if (arguments[2] == "logs") {
+							book += print("L", datestring);
+						} else {
+							console.log("What?");
+							break;
+						}
+						fs.writeFile(arguments[1], book, function(){});
+					} else if (arguments[4] == undefined && /^\d{4}\D\d\d\D\d\d/g.test(arguments[3]) == true) {
+						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
+						if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[2]) == true) {
+							if (new Date(arguments[2]) < new Date(arguments[3])) {
+								var tomorrow = new Date(arguments[2]);
+								for (var i = 0; i < Math.round((new Date(arguments[3])-new Date(arguments[2]))/(1000*60*60*24))+1; i++) {
+									var today = tomorrow.getFullYear()+"/";
+									if ((tomorrow.getMonth()+1) < 10) {
+										today += "0";
+									}
+									today += (tomorrow.getMonth()+1)+"/"; 
+									if(tomorrow.getDate() < 10) {
+										today += "0"
+									}
+									today += tomorrow.getDate();
+									if (journal.entries.indexOf(today) > -1) {
+										book += print("RLT", today)+"\n";
+									}
+									tomorrow.setDate(tomorrow.getDate() + 1);
+								}
+							} else {
+								console.log("Nice try.");
+								break;
+							}
+						} else if (arguments[2] == "tasks" && journal.entries.indexOf(arguments[3]) > -1) {
+							book += print("T", arguments[3]);
+						} else if (arguments[2] == "records" && journal.entries.indexOf(arguments[3]) > -1) {
+							book += print("R", arguments[3]);
+						} else if (arguments[2] == "logs" && journal.entries.indexOf(arguments[3]) > -1) {
+							book += print("L", arguments[3]);
+						} else {
+							console.log("What?");
+							break;
+						}
+						fs.writeFile(arguments[1], book, function(){});
+					} else if (/^\d{4}\D\d\d\D\d\d/g.test(arguments[3]) == true && /^\d{4}\D\d\d\D\d\d/g.test(arguments[4]) == true) {
+						book += arguments[1].substring(arguments[1].lastIndexOf("/")+1, arguments[1].lastIndexOf("."))+"\n";
+						if (arguments[2] == "tasks") {
+							if (new Date(arguments[3]) < new Date(arguments[4])) {
+								var tomorrow = new Date(arguments[3]);
+								for (var i = 0; i < Math.round((new Date(arguments[4])-new Date(arguments[3]))/(1000*60*60*24))+1; i++) {
+									var today = tomorrow.getFullYear()+"/";
+									if ((tomorrow.getMonth()+1) < 10) {
+										today += "0";
+									}
+									today += (tomorrow.getMonth()+1)+"/"; 
+									if(tomorrow.getDate() < 10) {
+										today += "0"
+									}
+									today += tomorrow.getDate();
+									if (journal.entries.indexOf(today) > -1) {
+										book += print("T", today)+"\n";
+									}
+									tomorrow.setDate(tomorrow.getDate() + 1);
+								}
+							} else {
+								console.log("Nice try.");
+								break;
+							}
+						} else if (arguments[2] == "records") {
+							if (new Date(arguments[3]) < new Date(arguments[4])) {
+								var tomorrow = new Date(arguments[3]);
+								for (var i = 0; i < Math.round((new Date(arguments[4])-new Date(arguments[3]))/(1000*60*60*24))+1; i++) {
+									var today = tomorrow.getFullYear()+"/";
+									if ((tomorrow.getMonth()+1) < 10) {
+										today += "0";
+									}
+									today += (tomorrow.getMonth()+1)+"/"; 
+									if(tomorrow.getDate() < 10) {
+										today += "0"
+									}
+									today += tomorrow.getDate();
+									if (journal.entries.indexOf(today) > -1) {
+										book += print("R", today)+"\n";
+									}
+									tomorrow.setDate(tomorrow.getDate() + 1);
+								}
+							} else {
+								console.log("Nice try.");
+								break;
+							}
+						} else if (arguments[2] == "logs") {
+							if (new Date(arguments[3]) < new Date(arguments[4])) {
+								var tomorrow = new Date(arguments[3]);
+								for (var i = 0; i < Math.round((new Date(arguments[4])-new Date(arguments[3]))/(1000*60*60*24))+1; i++) {
+									var today = tomorrow.getFullYear()+"/";
+									if ((tomorrow.getMonth()+1) < 10) {
+										today += "0";
+									}
+									today += (tomorrow.getMonth()+1)+"/"; 
+									if(tomorrow.getDate() < 10) {
+										today += "0"
+									}
+									today += tomorrow.getDate();
+									if (journal.entries.indexOf(today) > -1) {
+										book += print("L", today)+"\n";
+									}
+									tomorrow.setDate(tomorrow.getDate() + 1);
+								}
+							} else {
+								console.log("Nice try.");
+								break;
+							}
+						} else {
+							console.log("What?");
+							break;
+						}
+						fs.writeFile(arguments[1], book, function(){});
 					} else {
 						console.log("The printer is jammed.");
 					}
