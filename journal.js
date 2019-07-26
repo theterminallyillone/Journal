@@ -209,9 +209,9 @@ function init() {
 		}
 		function print(RLT, day) {
 			var book = "";
-			book += day+"\n"+week[journal.entries[journal.entries.indexOf(day)+1].day].replace(" ", "")+"\n";
+			var week = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+			book += day+"-"+week[journal.entries[journal.entries.indexOf(day)+1].day]+"\n";
 			if (RLT.indexOf("R") > -1) {
-				book+="Records\n";
 				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].records.length; i++) {
 					var redacted = false;
 					for (var j = 0; j < journal.redacted.length; j++) {
@@ -227,7 +227,6 @@ function init() {
 				}
 			}
 			if (RLT.indexOf("L") > -1) {
-				book += "Logs\n";
 				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].logs.length; i++) {
 					var redacted = false;
 					for (var j = 0; j < journal.redacted.length; j++) {
@@ -243,7 +242,6 @@ function init() {
 				}
 			}
 			if (RLT.indexOf("T") > -1) {
-				book += "Tasks\n";
 				for (var i = 0; i < journal.entries[journal.entries.indexOf(day)+1].tasks.length; i++) {
 					var redacted = false;
 					for (var j = 0; j < journal.redacted.length; j++) {
@@ -548,10 +546,10 @@ function init() {
 					var document = "<!DOCTYPE html><html><head><title>Journal</title></head>";
 					document += "<style>.green { background-color: green} .yellow { background-color: yellow} .magenta { background-color: magenta } .cyan {background-color: cyan} .blue { background-color: blue} .red { background-color: red }</style>";
 					document += "<body bgcolor='#000000'><div id='container'></div><script>";
-					document += "function hilite(str,color){ if (color == 'default') { color = journal.hilited[journal.hilited.indexOf('default')+1]; }return '<span style=\"position:relative\" class='+color+'>'+str+'</span>';}";
+					document += "function unhide(thing){document.getElementById(thing).style='background-color:#FFFFFF;visibility:visible;';}function hilite(str,color){ if (color == 'default') { color = journal.hilited[journal.hilited.indexOf('default')+1]; }return '<span style=\"position:relative\" class='+color+'>'+str+'</span>';}";
 					document += "function processentry(str) {var pstr = str.replace(/\\n/g, ' * ').split(' '); var rstr = '';var redacted = false;for (var i = 0; i < journal.redacted.length; i++) {if (pstr.indexOf(journal.redacted[i]) > -1) {redacted = true;}} if (!redacted) {for (var i = 0; i < pstr.length; i++) {if (journal.hilited.indexOf(pstr[i]) > -1) {pstr[i]=hilite(pstr[i], journal.hilited[journal.hilited.indexOf(pstr[i])+1]);} else if (/^#.*/g.test(pstr[i]) == true) {pstr[i]=hilite(pstr[i], 'default');} else if (/~\\d\\d:\\d\\d:\\d\\d/g.test(pstr[i]) == true) {pstr[i] = '<span style=\"color:red\">'+pstr[i]+'</span>';}rstr += pstr[i]+' ';}}if (redacted == true) {return '<span style=\"background-color:#000000\">'+str.replace(/[^\\n]/g, '*').replace(/\\n/g, '</span>\\n<span style=\"background-color:#000000\">')+'</span>';} else {return rstr.replace(/\\* /g, '\\n');}}";
 					document += "var journal = "+JSON.stringify(journal)+";";
-					document += "for (var i = 0; i < journal.entries.length; i+=2) { var added = ''; added += '<div style=\"background-color:#FFFFFF\" id='+\"c\"+journal.entries[i]+' onclick='+\"document.getElementById(\"+\'+journal.entries[i]+\'+\").style=\"+\'visibility:visible\'+'><h>'+journal.entries[i]+'</h></div><div style=\"background-color:#FFFFFF;visibility:hidden;\" id='+journal.entries[i]+'><center>'; added+='<div class=\"records\">'; for (var j = 0; j < journal.entries[i+1].records.length; j++) { added+=processentry(journal.entries[i+1].records[j]).replace(/\\n/g, '<br>');} added+='</div><div class=\"logs\">'; for (var j = 0; j < journal.entries[i+1].logs.length; j++) { added+=processentry(journal.entries[i+1].logs[j]).replace(/\\n/g, '<br>');} added+='</div><div class=\"tasks\">'; for (var j = 0; j < journal.entries[i+1].tasks.length; j++) { added+=processentry(journal.entries[i+1].tasks[j]).replace(/\\n/g, '<br>');} added+='</center></div>';";
+					document += "for (var i = 0; i < journal.entries.length; i+=2) { var added = ''; added += '<div style=\"background-color:#FFFFFF\" id='+\"c\"+journal.entries[i]+' onclick='+\"unhide('\"+journal.entries[i]+\"')\"+'><h>\'+journal.entries[i]+\'</h></div><div style=\"background-color:#FFFFFF;visibility:hidden;\" id='+journal.entries[i]+'><center>'; added+='<div class=\"records\">'; for (var j = 0; j < journal.entries[i+1].records.length; j++) { added+=processentry(journal.entries[i+1].records[j]).replace(/\\n/g, '<br>')+'<br>';} added+='</div><div class=\"logs\">'; for (var j = 0; j < journal.entries[i+1].logs.length; j++) { added+=processentry(journal.entries[i+1].logs[j]).replace(/\\n/g, '<br>')+'<br>';} added+='</div><div class=\"tasks\">'; for (var j = 0; j < journal.entries[i+1].tasks.length; j++) { added+=processentry(journal.entries[i+1].tasks[j]).replace(/\\n/g, '<br>')+'<br>';} added+='</center></div>';";
 					document += "added += '</div><br>'; document.getElementById('container').innerHTML += added;}";
 					document += "</script></body></html>";
 					var http = require('http');
